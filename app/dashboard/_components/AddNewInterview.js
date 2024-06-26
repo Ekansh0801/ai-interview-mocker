@@ -13,6 +13,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { chatSession } from '@/utils/GeminiAIModel';
 import { LoaderCircle } from 'lucide-react';
+import { MockInterview } from '@/utils/schema';
+import { v4 as uuidv4 } from 'uuid';
+import { useUser } from '@clerk/nextjs';
+import moment from 'moment/moment';
+import { db } from '@/utils/db';
   
 function AddNewInterview() {
     const [openDialog,setOpenDialog] = useState(false);
@@ -20,6 +25,8 @@ function AddNewInterview() {
     const [jobDesc,setJobDesc] = useState();
     const [jobExperience,setJobExperience] = useState();
     const [loading,setLoading] = useState(false);
+    const [jsonResponse,setJsonResponse] = useState([]);
+    const {user} = useUser();
 
     const onSubmit = async(e) => {
       setLoading(true);
@@ -29,9 +36,29 @@ function AddNewInterview() {
       const InputPrompt = "Job Position: "+jobPosition+", Job Description: "+jobDesc+", Years of Experience: "+jobExperience+", Depending on Job Position, Job Description and Years of Experience give us "+process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT+" Interview quetions along with answers in JSON Format, Give Quetions and Answers as field in JSON"
 
       const result = await chatSession.sendMessage(InputPrompt);
-      console.log(result.response.text());
-      // const MockJsonResp = (result.response.text()).replace('```json','').replace('```','')
-      // console.log(JSON.parse(MockJsonResp));
+      const MockJsonResp = (result.response.text()).replace('```json','').replace('```','')
+      console.log(JSON.parse(MockJsonResp));
+      setJsonResponse(MockJsonResp);
+       
+      db
+      if(MockJsonResp){
+      const resp = await db.insert(MockInterview)
+      .values({
+        mockId:uuidv4(),
+        jsonMockResp:MockJsonResp,
+        jobPosition:jobPosition,
+        jobDesc:jobDesc,
+        jobExperience:jobExperience,
+        createdBy:user?.primaryEmailAddress?.emailAddress,
+        createdAt:moment().format('DD-MM-yyyy')
+
+      }).returning({mockId:MockInterview.mockId})
+      console.log(resp);
+    }
+    else{
+      console.log("error");
+    }
+
       setLoading(false);
     }
   return (
@@ -65,7 +92,7 @@ function AddNewInterview() {
                    <Button type="submit" disabled={loading}>
                     {loading ?
                       <>
-                     <LoaderCircle/>'Generating From AI'
+                     <LoaderCircle className='animate-spin'/>'Generating From AI'
                      </>
                       : 'Start Interview'}
                     </Button>
