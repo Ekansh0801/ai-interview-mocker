@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '@clerk/nextjs';
 import moment from 'moment/moment';
 import { db } from '@/utils/db';
+import { useRouter } from 'next/navigation';
   
 function AddNewInterview() {
     const [openDialog,setOpenDialog] = useState(false);
@@ -27,20 +28,20 @@ function AddNewInterview() {
     const [loading,setLoading] = useState(false);
     const [jsonResponse,setJsonResponse] = useState([]);
     const {user} = useUser();
+    const router = useRouter();
 
     const onSubmit = async(e) => {
       setLoading(true);
       e.preventDefault();
-      console.log(jobPosition,jobDesc,jobExperience);
+      // console.log(jobPosition,jobDesc,jobExperience);
 
       const InputPrompt = "Job Position: "+jobPosition+", Job Description: "+jobDesc+", Years of Experience: "+jobExperience+", Depending on Job Position, Job Description and Years of Experience give us "+process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT+" Interview quetions along with answers in JSON Format, Give Quetions and Answers as field in JSON"
 
       const result = await chatSession.sendMessage(InputPrompt);
       const MockJsonResp = (result.response.text()).replace('```json','').replace('```','')
-      console.log(JSON.parse(MockJsonResp));
+      // console.log(JSON.parse(MockJsonResp));
       setJsonResponse(MockJsonResp);
        
-      db
       if(MockJsonResp){
       const resp = await db.insert(MockInterview)
       .values({
@@ -53,7 +54,11 @@ function AddNewInterview() {
         createdAt:moment().format('DD-MM-yyyy')
 
       }).returning({mockId:MockInterview.mockId})
-      console.log(resp);
+      // console.log(resp);
+      if(resp){
+        setOpenDialog(false);
+        router.push('/dashboard/interview'+resp[0]?.mockId)
+      }
     }
     else{
       console.log("error");
