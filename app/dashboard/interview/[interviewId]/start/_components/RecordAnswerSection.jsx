@@ -7,7 +7,7 @@ import useSpeechToText from 'react-hook-speech-to-text';
 import { Mic } from 'lucide-react'
 
 function RecordAnswerSection(){
-    const [userAnswer,setUserAnswer] = useState('');
+    const [userAnswer,setUserAnswer] = useState('')
     const {
         error,
         interimResult,
@@ -20,11 +20,11 @@ function RecordAnswerSection(){
         useLegacyResults: false
       });
 
-      if (error) return <p>Web Speech API is not available in this browser 🤷‍</p>;
+    //   if (error) return <p>Web Speech API is not available in this browser 🤷‍</p>;
 
       useEffect(() => {
         results.map((result) => (
-            setUserAnswer(prevAns => prevAns + result.transcript)
+            setUserAnswer(prevAns => prevAns + result?.transcript)
         ))
       },[results])
 
@@ -36,13 +36,15 @@ function RecordAnswerSection(){
         </div>
           <Button variant="outline" className="my-10 " onClick={isRecording?stopSpeechToText : startSpeechToText}>
           {isRecording ? 
-            <h2 className='text-red flex gap-2 '>
+            <h2 className='text-red-600 flex gap-2 '>
             <Mic/>
             'Stop Recording....'
             </h2>
             :'Record Answer'
             }
           </Button>
+
+          <Button onClick={() => console.log(userAnswer)}>Show User Answer</Button>
         </div>
     )
 }
